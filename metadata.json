@@ -1,0 +1,9 @@
+{
+  "name": "SummightCF Coding Hub LMS",
+  "description": "A comprehensive Learning Management System for the SummightCF Coding Hub, offering a 6-week crash course in HTML, CSS, and JavaScript with interactive modules, progress tracking, and an AI-powered tutor.",
+  "requestFramePermissions": [
+    "microphone",
+    "camera",
+    "display-capture"
+  ]
+}
