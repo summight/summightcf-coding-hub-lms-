@@ -179,47 +179,18 @@ const App: React.FC = () => {
       }
 
       return (
-        <CourseDataProvider>
-          <Header onLogout={handleLogout} isAdmin={true} />
-          <AdminLayout
-            adminView={adminView}
-            setAdminView={setAdminView}
-            onUpdateAdminProfile={handleUpdateAdminProfile}
-            onUpdateAdminPassword={handleUpdateAdminPassword}
-            adminCredentials={adminCreds}
-          />
-        </CourseDataProvider>
+  <CourseDataProvider>
+    <Header onLogout={handleLogout} isAdmin={true} />
+    <AdminLayout
+      adminView={adminView}
+      setAdminView={setAdminView}
+      onUpdateAdminProfile={handleUpdateAdminProfile}
+      onUpdateAdminPassword={handleUpdateAdminPassword}
+      adminCredentials={adminCreds}
+    />
+  </CourseDataProvider>
+);
 
-        // return (
-  <CourseProvider>
-    <CourseDataProvider>
-      <Header />
-
-      {!isLoggedIn ? (
-        <HomePage />
-      ) : isAdminLoggedIn ? (
-        <AdminLayout
-          view={adminView}
-          setView={setAdminView}
-          selectedWeek={selectedWeek}
-          setSelectedWeek={setSelectedWeek}
-        />
-      ) : (
-        <>
-          {currentView === View.Dashboard && <Dashboard />}
-          {currentView === View.Course && <CourseView />}
-          {currentView === View.LiveStudio && <LiveStudio />}
-          <AiTutor />
-          <UserChat />
-        </>
-      )}
-
-      <Footer />
-    </CourseDataProvider>
-  </CourseProvider>
-// );
-
-      );
     }
 
     if (isLoggedIn && currentUserEmail) {
