@@ -29,8 +29,12 @@ export enum AdminView {
 
 // Moved outside component to be used in useState initializer
 const getAllUsers = (): Record<string, User> => {
-    const users = localStorage.getItem('users');
-    return users ? JSON.parse(users) : {};
+    try {
+        const users = localStorage.getItem('users');
+        return users ? JSON.parse(users) : {};
+    } catch {
+        return {};
+    }
 };
 
 const App: React.FC = () => {
@@ -40,11 +44,16 @@ const App: React.FC = () => {
   const [adminView, setAdminView] = useState<AdminView>(AdminView.Dashboard);
   const [selectedWeek, setSelectedWeek] = useState<number>(0);
   const [currentUserEmail, setCurrentUserEmail] = useState<string | null>(null);
-  const [allUsers, setAllUsers] = useState<Record<string, User>>(getAllUsers);
+  // initialize by calling the function to return the actual object
+  const [allUsers, setAllUsers] = useState<Record<string, User>>(getAllUsers());
 
   const getAdminCredentials = (): AdminCredentials | null => {
-      const creds = localStorage.getItem('adminCredentials');
-      return creds ? JSON.parse(creds) : null;
+      try {
+          const creds = localStorage.getItem('adminCredentials');
+          return creds ? JSON.parse(creds) : null;
+      } catch {
+          return null;
+      }
   };
 
   useEffect(() => {
@@ -172,7 +181,7 @@ const App: React.FC = () => {
   const renderContent = () => {
     if (isAdminLoggedIn) {
       const adminCreds = getAdminCredentials();
-      const adminUser: User = { name: adminCreds?.name || 'Admin', progress: {} };
+      const adminUser: User = { name: adminCreds?.name || 'Admin', progress: {}, avatar: '', chatHistory: [] };
       
       if (adminView === AdminView.LiveStudio) {
           return <LiveStudio currentUser={adminUser} currentUserEmail={adminCreds?.email || ''} isAdmin={true} onExit={() => setAdminView(AdminView.Dashboard)} />;
@@ -194,7 +203,7 @@ const App: React.FC = () => {
     }
 
     if (isLoggedIn && currentUserEmail) {
-      const currentUser = allUsers[currentUserEmail];
+      const currentUser = allUsers[currentUserEmail] ?? { name: '', progress: {}, avatar: '', chatHistory: [] };
       
       if (currentView === View.LiveStudio) {
           return <LiveStudio currentUser={currentUser} currentUserEmail={currentUserEmail} isAdmin={false} onExit={handleBackToDashboard} />;
@@ -225,7 +234,7 @@ const App: React.FC = () => {
                   initialChatHistory={currentUser?.chatHistory || []}
                   onUpdateChatHistory={handleUpdateChatHistory}
               />
-              <UserChat userEmail={currentUserEmail} userName={currentUser.name} />
+              <UserChat userEmail={currentUserEmail} userName={currentUser?.name || ''} />
           </CourseProvider>
         </CourseDataProvider>
       );
