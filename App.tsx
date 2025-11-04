@@ -62,9 +62,11 @@ const App: React.FC = () => {
     
     if (adminStatus === 'true') {
         setIsAdminLoggedIn(true);
-    } else if (loggedInUserEmail) {
-      setIsLoggedIn(true);
+    } 
+    
+    if (loggedInUserEmail) {
       setCurrentUserEmail(loggedInUserEmail);
+      setIsLoggedIn(true);
     }
   }, []);
 
@@ -187,6 +189,36 @@ const App: React.FC = () => {
             adminCredentials={adminCreds}
           />
         </CourseDataProvider>
+
+        // return (
+  <CourseProvider>
+    <CourseDataProvider>
+      <Header />
+
+      {!isLoggedIn ? (
+        <HomePage />
+      ) : isAdminLoggedIn ? (
+        <AdminLayout
+          view={adminView}
+          setView={setAdminView}
+          selectedWeek={selectedWeek}
+          setSelectedWeek={setSelectedWeek}
+        />
+      ) : (
+        <>
+          {currentView === View.Dashboard && <Dashboard />}
+          {currentView === View.Course && <CourseView />}
+          {currentView === View.LiveStudio && <LiveStudio />}
+          <AiTutor />
+          <UserChat />
+        </>
+      )}
+
+      <Footer />
+    </CourseDataProvider>
+  </CourseProvider>
+// );
+
       );
     }
 
