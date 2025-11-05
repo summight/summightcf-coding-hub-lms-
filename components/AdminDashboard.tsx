@@ -110,7 +110,7 @@ const AdminDashboard: React.FC = () => {
     return (
         <div className="flex-grow container mx-auto px-4 py-8 space-y-8">
             <div>
-                <h1 className="text-3xl font-bold text-slate-800 dark:text-slate-100">Administrator Dashboard</h1>
+                <h1 className="text-3xl font-bold text-slate-800 dark:text-slate-100">My Administrator Dashboard</h1>
                 <p className="text-md text-slate-600 dark:text-slate-400">Overview of student performance and engagement.</p>
             </div>
             
