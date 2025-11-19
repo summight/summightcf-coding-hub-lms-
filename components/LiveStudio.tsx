@@ -16,7 +16,7 @@ import {
   fetchChatMessagesDB,
   sendChatMessageDB,
   clearChatMessagesDB,
-} from '../dbService';
+} from '../src/auth';
 import { User, LiveStudioState, LiveSessionDBState, LiveStudioChatMessage } from '../types';
 
 interface LiveStudioProps {

@@ -25,7 +25,7 @@ import {
   updateAdminPassword,
   updateChatHistory,
   logoutUser,
-} from './dbService';
+} from './src/auth';  // ← CHANGE THIS LINE
 
 export enum View {
   Dashboard,

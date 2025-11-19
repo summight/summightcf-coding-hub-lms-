@@ -2,7 +2,7 @@
 import React, { createContext, useState, useEffect, useContext, ReactNode, useCallback } from 'react';
 import { useCourseData } from './CourseDataContext';
 import { Progress, ModuleStatus } from '../types';
-import { supabase } from '../dbService';  // Real Supabase client
+import { ensureAdminExists } from '../src/auth';  // Real Supabase client
 
 interface CourseContextType {
   progress: Progress;

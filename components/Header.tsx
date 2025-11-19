@@ -1,6 +1,5 @@
 // components/Header.tsx
-import React, { useState, useEffect } from 'react';
-import { getActiveSession } from '../dbService';
+import React from 'react';
 
 interface HeaderProps {
   onLogout: () => void;
@@ -17,17 +16,8 @@ const Header: React.FC<HeaderProps> = ({
   userAvatar,
   onNavigateToLiveStudio,
 }) => {
-  const [isLive, setIsLive] = useState(false);
-
-  useEffect(() => {
-    const checkLive = async () => {
-      const session = await getActiveSession();
-      setIsLive(!!session);
-    };
-    checkLive();
-    const interval = setInterval(checkLive, 5000);
-    return () => clearInterval(interval);
-  }, []);
+  // Temporarily hardcode isLive = false until we build the API
+  const isLive = false;
 
   return (
     <header className="bg-white dark:bg-slate-800 shadow-sm">
@@ -38,8 +28,8 @@ const Header: React.FC<HeaderProps> = ({
               {isAdmin ? 'Admin Portal' : 'Student Dashboard'}
             </h1>
             {isLive && (
-              <span className="ml-3 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                Live
+              <span className="ml-3 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 animate-pulse">
+                ● Live
               </span>
             )}
           </div>
@@ -47,14 +37,18 @@ const Header: React.FC<HeaderProps> = ({
             {isLive && (
               <button
                 onClick={onNavigateToLiveStudio}
-                className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-red-600 hover:bg-red-700"
+                className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-red-600 hover:bg-red-700 transition"
               >
-                Join Live
+                Join Live Session
               </button>
             )}
             <div className="flex items-center space-x-3">
-              {userAvatar && (
-                <img className="h-8 w-8 rounded-full" src={userAvatar} alt={userName} />
+              {userAvatar ? (
+                <img className="h-10 w-10 rounded-full object-cover border-2 border-slate-300" src={userAvatar} alt={userName} />
+              ) : (
+                <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold">
+                  {userName.charAt(0).toUpperCase()}
+                </div>
               )}
               <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
                 {userName}
@@ -62,7 +56,7 @@ const Header: React.FC<HeaderProps> = ({
             </div>
             <button
               onClick={onLogout}
-              className="text-sm text-slate-500 hover:text-slate-700 dark:text-slate-400"
+              className="text-sm font-medium text-red-600 hover:text-red-800 dark:text-red-400 transition"
             >
               Logout
             </button>
