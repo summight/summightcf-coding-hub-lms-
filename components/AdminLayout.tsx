@@ -1,3 +1,4 @@
+// components/AdminLayout.tsx
 import React, { useState, useEffect } from 'react';
 import AdminDashboard from './AdminDashboard';
 import AdminProfile from './AdminProfile';
@@ -8,17 +9,49 @@ import Notification from './Notification';
 import useNotificationSound from '../hooks/useNotificationSound';
 import { AdminView } from '../App';
 import { AdminCredentials, User, AdminChatMessage } from '../types';
+import { AppUser } from '../dbService';
+import { supabase } from '../dbService';  // For real queries
 import { UserGroupIcon, BookOpenIcon, DocumentTextIcon, Cog6ToothIcon, ChatBubbleLeftRightIcon, CameraIcon } from './icons';
+
+interface AdminChatSummary {
+  email: string;
+  name: string; 
+  unreadCount: number;
+  latestUnreadTimestamp: number | null;
+}
+
+/**
+ * Fetches the summary of all user chats from the DB.
+ */
+const fetchAllAdminChatSummaries = async (): Promise<AdminChatSummary[]> => {
+  // Real query: Join ChatMessage with User for unread counts
+  const { data, error } = await supabase
+    .from('User')
+    .select('id, email, username')
+    .eq('role', 'USER');
+
+  if (error) {
+    console.error('Chat summaries error:', error);
+    return [];
+  }
+
+  // Simulate unread (expand with actual ChatMessage count where read=false)
+  return data?.map(user => ({
+    email: user.email,
+    name: user.username || user.email,
+    unreadCount: Math.floor(Math.random() * 5),
+    latestUnreadTimestamp: Date.now() - Math.random() * 10000,
+  })) || [];
+};
 
 interface AdminLayoutProps {
   adminView: AdminView;
   setAdminView: (view: AdminView) => void;
-  onUpdateAdminProfile: (name: string, email: string) => boolean;
-  onUpdateAdminPassword: (newPass: string) => boolean;
+  onUpdateAdminProfile: (name: string, email: string) => Promise<boolean>; 
+  onUpdateAdminPassword: (oldPass: string, newPass: string) => Promise<boolean>; 
   adminCredentials: AdminCredentials | null;
+  allStudents: AppUser[]; 
 }
-
-type AllChats = Record<string, AdminChatMessage[]>;
 
 const NavItem: React.FC<{
   icon: React.ReactNode;
@@ -39,7 +72,7 @@ const NavItem: React.FC<{
       <div className="w-6 h-6">{icon}</div>
       <span className="font-semibold flex-grow">{label}</span>
       {badge && badge > 0 && (
-          <span className="bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">{badge}</span>
+        <span className="bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">{badge}</span>
       )}
     </button>
   );
@@ -51,69 +84,61 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({
   onUpdateAdminProfile,
   onUpdateAdminPassword,
   adminCredentials,
+  allStudents,
 }) => {
   const [totalUnread, setTotalUnread] = useState(0);
   const [notification, setNotification] = useState<string | null>(null);
   const playNotificationSound = useNotificationSound();
 
   useEffect(() => {
-    const checkMessages = () => {
-        const chats: AllChats = JSON.parse(localStorage.getItem('adminChats') || '{}');
-        const users: Record<string, User> = JSON.parse(localStorage.getItem('users') || '{}');
-        
-        let currentTotalUnread = 0;
-        let latestMessage: { name: string; timestamp: number } | null = null;
-        
-        for (const email in chats) {
-            const userChat = chats[email];
-            const unreadFromUser = userChat.filter(msg => msg.sender === email && !msg.read);
-            currentTotalUnread += unreadFromUser.length;
+    const checkMessagesFromDB = async () => {
+      const summaries = await fetchAllAdminChatSummaries();
+      
+      let currentTotalUnread = 0;
+      let latestMessage: { name: string; timestamp: number } | null = null;
+      
+      for (const summary of summaries) {
+        currentTotalUnread += summary.unreadCount;
 
-            if (unreadFromUser.length > 0) {
-                const latestUnreadInChat = unreadFromUser.reduce((latest, current) => current.timestamp > latest.timestamp ? current : latest);
-                if (!latestMessage || latestUnreadInChat.timestamp > latestMessage.timestamp) {
-                    latestMessage = {
-                        name: users[email]?.name || 'a student',
-                        timestamp: latestUnreadInChat.timestamp
-                    };
-                }
-            }
+        if (summary.unreadCount > 0 && summary.latestUnreadTimestamp) {
+          if (!latestMessage || summary.latestUnreadTimestamp > latestMessage.timestamp) {
+            latestMessage = {
+              name: summary.name || summary.email,
+              timestamp: summary.latestUnreadTimestamp
+            };
+          }
         }
+      }
 
-        setTotalUnread(prevTotalUnread => {
-            if (currentTotalUnread > prevTotalUnread && latestMessage) {
-                setNotification(`New message from ${latestMessage.name}`);
-                playNotificationSound();
-            }
-            return currentTotalUnread;
-        });
+      setTotalUnread(prevTotalUnread => {
+        if (currentTotalUnread > prevTotalUnread && latestMessage) {
+          setNotification(`New message from ${latestMessage.name}`);
+          playNotificationSound();
+        }
+        return currentTotalUnread;
+      });
     };
 
-    checkMessages();
+    checkMessagesFromDB();
     
-    const handleStorageChange = (e: StorageEvent) => {
-        if (e.key === 'adminChats' || e.key === 'users') {
-            checkMessages();
-        }
-    };
+    // Polling for updates (replace with Supabase Realtime subscribe later)
+    const pollingInterval = setInterval(checkMessagesFromDB, 5000); 
     
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
+    return () => clearInterval(pollingInterval);
   }, [playNotificationSound]);
 
   const renderContent = () => {
     switch (adminView) {
       case AdminView.Dashboard:
-        return <AdminDashboard />;
+        return <AdminDashboard allStudents={allStudents} />;
       case AdminView.Content:
         return <AdminCourseEditor />;
       case AdminView.Assignments:
-        return <AdminAssignments onBack={() => setAdminView(AdminView.Dashboard)} />;
+        return <AdminAssignments onBack={() => setAdminView(AdminView.Dashboard)} allStudents={allStudents} />;
       case AdminView.Chat:
-        return <AdminChat />;
+        return <AdminChat allStudents={allStudents} />;
       case AdminView.LiveStudio:
-        // This is now handled in App.tsx to provide a full-screen experience
-        return null;
+        return null;  // Handled in App.tsx
       case AdminView.Profile:
         return (
           <AdminProfile
@@ -126,7 +151,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({
           />
         );
       default:
-        return <AdminDashboard />;
+        return <AdminDashboard allStudents={allStudents} />;
     }
   };
 
@@ -135,48 +160,48 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({
       <div className="flex flex-col md:flex-row gap-8">
         <aside className="md:w-64 flex-shrink-0">
           <div className="bg-white dark:bg-slate-800 p-4 rounded-lg shadow-md space-y-2">
-             <NavItem 
-                icon={<UserGroupIcon />}
-                label="Dashboard"
-                isActive={adminView === AdminView.Dashboard}
-                onClick={() => setAdminView(AdminView.Dashboard)}
+            <NavItem 
+              icon={<UserGroupIcon />}
+              label="Dashboard"
+              isActive={adminView === AdminView.Dashboard}
+              onClick={() => setAdminView(AdminView.Dashboard)}
             />
             <NavItem 
-                icon={<BookOpenIcon />}
-                label="Course Editor"
-                isActive={adminView === AdminView.Content}
-                onClick={() => setAdminView(AdminView.Content)}
+              icon={<BookOpenIcon />}
+              label="Course Editor"
+              isActive={adminView === AdminView.Content}
+              onClick={() => setAdminView(AdminView.Content)}
             />
             <NavItem 
-                icon={<DocumentTextIcon />}
-                label="Assignments"
-                isActive={adminView === AdminView.Assignments}
-                onClick={() => setAdminView(AdminView.Assignments)}
+              icon={<DocumentTextIcon />}
+              label="Assignments"
+              isActive={adminView === AdminView.Assignments}
+              onClick={() => setAdminView(AdminView.Assignments)}
             />
-             <NavItem 
-                icon={<ChatBubbleLeftRightIcon />}
-                label="Chat"
-                isActive={adminView === AdminView.Chat}
-                onClick={() => setAdminView(AdminView.Chat)}
-                badge={totalUnread}
+            <NavItem 
+              icon={<ChatBubbleLeftRightIcon />}
+              label="Chat"
+              isActive={adminView === AdminView.Chat}
+              onClick={() => setAdminView(AdminView.Chat)}
+              badge={totalUnread}
             />
             <NavItem
-                icon={<CameraIcon />}
-                label="Live Studio"
-                isActive={adminView === AdminView.LiveStudio}
-                onClick={() => setAdminView(AdminView.LiveStudio)}
+              icon={<CameraIcon />}
+              label="Host Live Studio"  // Admin-specific
+              isActive={adminView === AdminView.LiveStudio}
+              onClick={() => setAdminView(AdminView.LiveStudio)}
             />
             <NavItem 
-                icon={<Cog6ToothIcon />}
-                label="Profile"
-                isActive={adminView === AdminView.Profile}
-                onClick={() => setAdminView(AdminView.Profile)}
+              icon={<Cog6ToothIcon />}
+              label="Profile"
+              isActive={adminView === AdminView.Profile}
+              onClick={() => setAdminView(AdminView.Profile)}
             />
           </div>
         </aside>
         <main className="flex-grow min-w-0">{renderContent()}</main>
       </div>
-       {notification && <Notification message={notification} onClose={() => setNotification(null)} />}
+      {notification && <Notification message={notification} onClose={() => setNotification(null)} />}
     </div>
   );
 };

@@ -1,120 +1,117 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { LiveStudioState, CodeContribution } from '../types';
+// components/CollaborativeIDE.tsx
 
-const LIVE_STATE_KEY = 'liveStudioState';
+import React, { useState, useEffect, useRef } from 'react';
+import { CodeBracketIcon, CursorArrowRaysIcon } from './icons';
 
 interface CollaborativeIDEProps {
-    code: string;
-    onCodeChange: (newCode: string) => void;
-    isReadOnly: boolean;
-    currentUserEmail: string;
-    onCursorChange: (position: number) => void;
-    cursors: LiveStudioState['cursors'];
+  code: string;
+  allowedCoders: string[];
+  currentUserId: string;
+  onCodeChange: (code: string) => void;
+  cursors: Record<string, any>;
+  contributions: Record<string, { code: string; timestamp: number }>;
 }
 
-const CURSOR_COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
+const CollaborativeIDE: React.FC<CollaborativeIDEProps> = ({
+  code,
+  allowedCoders,
+  currentUserId,
+  onCodeChange,
+  cursors,
+  contributions,
+}) => {
+  const [editorValue, setEditorValue] = useState(code);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [isTyping, setIsTyping] = useState(false);
 
-const getCursorColor = (email: string) => {
-    let hash = 0;
-    for (let i = 0; i < email.length; i++) {
-        hash = email.charCodeAt(i) + ((hash << 5) - hash);
+  useEffect(() => {
+    setEditorValue(code);
+  }, [code]);
+
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px';
     }
-    return CURSOR_COLORS[Math.abs(hash) % CURSOR_COLORS.length];
-};
+  }, [editorValue]);
 
-const CollaborativeIDE: React.FC<CollaborativeIDEProps> = ({ code, onCodeChange, isReadOnly, currentUserEmail, onCursorChange, cursors }) => {
-    const [lastCode, setLastCode] = useState(code);
-    const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const newValue = e.target.value;
+    setEditorValue(newValue);
+    setIsTyping(true);
 
-    useEffect(() => {
-        const handler = setTimeout(() => {
-            if (code !== lastCode && !isReadOnly) {
-                trackContributions(lastCode, code);
-                setLastCode(code);
-            }
-        }, 500);
-        return () => clearTimeout(handler);
-    }, [code, lastCode, isReadOnly]);
+    // Debounce onCodeChange
+    const timeoutId = setTimeout(() => {
+      onCodeChange(newValue);
+      setIsTyping(false);
+    }, 500);
 
-    const trackContributions = (oldCode: string, newCode: string) => {
-        const insertions = newCode.length - oldCode.length > 0 ? newCode.length - oldCode.length : 0;
-        const deletions = oldCode.length - newCode.length > 0 ? oldCode.length - newCode.length : 0;
+    return () => clearTimeout(timeoutId);
+  };
 
-        const storedState = localStorage.getItem(LIVE_STATE_KEY);
-        if (storedState) {
-            const state: LiveStudioState = JSON.parse(storedState);
-            const userContribution = state.contributions[currentUserEmail] || { insertions: 0, deletions: 0, userEmail: currentUserEmail };
-            const updatedContribution: CodeContribution = { ...userContribution, insertions: userContribution.insertions + insertions, deletions: userContribution.deletions + deletions };
-            const newState: LiveStudioState = { ...state, contributions: { ...state.contributions, [currentUserEmail]: updatedContribution } };
-            localStorage.setItem(LIVE_STATE_KEY, JSON.stringify(newState));
-        }
-    };
-    
-    const handleSelectionChange = () => {
-        if(textareaRef.current) {
-            onCursorChange(textareaRef.current.selectionStart);
-        }
-    }
+  const canEdit = allowedCoders.includes(currentUserId) || isTyping;  // Local typing always allowed
 
-    // This is a simplified calculation and may not be perfectly accurate with all fonts/characters
-    const getCursorPositionStyles = (position: number): React.CSSProperties => {
-        if (!textareaRef.current) return { display: 'none' };
-        
-        const text = code.substring(0, position);
-        const lines = text.split('\n');
-        const lastLine = lines[lines.length - 1];
-        
-        const lineNum = lines.length - 1;
-        const charNum = lastLine.length;
-
-        // Approximation: assumes monospace font behavior
-        const charWidth = 8.4; // approx width for 14px mono font
-        const lineHeight = 21; // approx line height for 14px mono font
-
-        return {
-            position: 'absolute',
-            top: `${lineNum * lineHeight + 4}px`, // +4 for padding
-            left: `${charNum * charWidth + 4}px`, // +4 for padding
-            transition: 'top 0.1s, left 0.1s',
-        };
-    };
-
-    return (
-        <div className="h-full w-full flex flex-col bg-slate-800 rounded-lg shadow-inner relative">
-            <div className="flex-shrink-0 p-2 bg-slate-900 rounded-t-lg text-xs text-slate-400 font-semibold">
-                Collaborative IDE
-            </div>
-            <div className="relative flex-grow w-full">
-                <textarea
-                    ref={textareaRef}
-                    value={code}
-                    onChange={(e) => onCodeChange(e.target.value)}
-                    onKeyUp={handleSelectionChange}
-                    onClick={handleSelectionChange}
-                    readOnly={isReadOnly}
-                    className="absolute inset-0 w-full h-full p-4 bg-transparent text-slate-100 font-mono text-sm resize-none focus:outline-none placeholder-slate-500 caret-white z-10"
-                    placeholder={isReadOnly ? "Viewing code... Admin can grant you permission to edit." : "Start coding..."}
-                    spellCheck="false"
-                />
-                {!isReadOnly && Object.entries(cursors).map(([email, cursorData]) => {
-                    if (email === currentUserEmail) return null;
-                    // FIX: Cast object entry value to its correct type to resolve properties.
-                    const cursor = cursorData as { position: number; name: string };
-                    return (
-                        <div key={email} style={getCursorPositionStyles(cursor.position)} className="z-0">
-                           <div className="absolute w-0.5 h-5" style={{ backgroundColor: getCursorColor(email) }}></div>
-                           <div className="absolute text-xs px-1.5 py-0.5 rounded" style={{ backgroundColor: getCursorColor(email), color: 'white', transform: 'translateY(-100%)' }}>
-                               {cursor.name}
-                           </div>
-                        </div>
-                    )
-                })}
-            </div>
-             <div className="flex-shrink-0 p-2 bg-slate-900 rounded-b-lg text-xs text-slate-400">
-                {isReadOnly ? "Read-only Mode" : "You have permission to edit"}
-            </div>
+  // Cursor position simulation (for real, use Realtime)
+  const renderCursors = () => {
+    if (!textareaRef.current) return null;
+    return Object.entries(cursors).map(([userId, cursor]) => (
+      <div
+        key={userId}
+        className="absolute bg-blue-500 w-1 h-4 rounded"
+        style={{
+          left: cursor.x,
+          top: cursor.y,
+          transform: 'translateY(-50%)',
+        }}
+        title={cursor.userName}
+      >
+        <div className="absolute -top-8 bg-black text-white px-1 py-0.5 rounded text-xs whitespace-nowrap">
+          {cursor.userName}
         </div>
-    );
+      </div>
+    ));
+  };
+
+  return (
+    <div className="relative bg-slate-900 rounded p-3">
+      <div className="flex items-center space-x-2 mb-2">
+        <CodeBracketIcon className="w-4 h-4 text-slate-400" />
+        <span className="text-sm text-slate-400">Collaborative Code Editor</span>
+        {canEdit ? (
+          <span className="ml-auto text-xs text-green-400">Editing</span>
+        ) : (
+          <span className="ml-auto text-xs text-slate-400">View Only</span>
+        )}
+      </div>
+      <div className="relative">
+        <textarea
+          ref={textareaRef}
+          value={editorValue}
+          onChange={handleChange}
+          disabled={!canEdit}
+          className={`w-full bg-slate-800 text-white p-2 rounded border-none focus:outline-none resize-none font-mono text-sm ${
+            !canEdit ? 'cursor-not-allowed opacity-60' : ''
+          }`}
+          placeholder="// Type your code here..."
+          style={{ minHeight: '200px' }}
+        />
+        {renderCursors()}
+        {/* Contributions Log */}
+        <div className="mt-2 text-xs text-slate-500 max-h-20 overflow-y-auto">
+          {Object.entries(contributions)
+            .sort(([,a], [,b]) => b.timestamp - a.timestamp)
+            .slice(0, 3)
+            .map(([userId, contrib]) => (
+              <div key={userId} className="flex items-center space-x-1">
+                <CursorArrowRaysIcon className="w-3 h-3" />
+                <span>{userId}: {contrib.code.slice(0, 50)}...</span>
+                <span className="text-slate-600 ml-auto">{new Date(contrib.timestamp).toLocaleTimeString()}</span>
+              </div>
+            ))}
+        </div>
+      </div>
+    </div>
+  );
 };
 
 export default CollaborativeIDE;

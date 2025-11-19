@@ -1,3 +1,4 @@
+// api/proxy.js
 export default async function handler(req, res) {
   const response = await fetch('https://ab.reasonlabsapi.com/sub/sdk-QtSYWOMLlkHBbNMB', {
     method: 'GET', // or 'POST' if needed

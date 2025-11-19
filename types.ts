@@ -1,3 +1,4 @@
+// src/types.ts
 export enum ModuleType {
   Lesson = 'lesson',
   Video = 'video',
@@ -12,10 +13,15 @@ export enum ModuleStatus {
   Completed = 'Completed',
 }
 
+export enum SubmissionStatus {
+  Submitted = 'Submitted',
+  Graded = 'Graded',
+}
+
 export interface Module {
   title: string;
   type: ModuleType;
-  content: string; // Could be markdown text, video ID, or exercise description
+  content: string;
   description?: string;
 }
 
@@ -38,36 +44,34 @@ export interface Progress {
 }
 
 export interface User {
-    name: string;
-    progress: Progress;
-    avatar?: string;
-    chatHistory?: AiChatMessage[];
+  name: string;
+  email?: string;
+  id: string;
+}
+
+export interface AppUser {
+  id: string;
+  email: string;
+  role: 'USER' | 'ADMIN';
+  name: string;
+  progress: Progress;
+  avatar: string;
+  chatHistory: AiChatMessage[];
+  username?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface AdminCredentials {
-    name: string;
-    email: string;
-    pass: string;
-}
-
-export interface GroundingChunk {
-  web?: {
-    uri: string;
-    title:string;
-  };
+  name: string;
+  email: string;
+  pass: string;
 }
 
 export interface AiChatMessage {
-  type: 'user' | 'bot';
-  text: string;
-  sources?: GroundingChunk[];
-}
-
-export interface AdminChatMessage {
-  sender: 'admin' | string; // string is user's email
-  text: string;
+  role: 'user' | 'assistant';
+  content: string;
   timestamp: number;
-  read: boolean;
 }
 
 export type ModuleLinks = {
@@ -76,13 +80,8 @@ export type ModuleLinks = {
   };
 };
 
-export enum SubmissionStatus {
-  Submitted = 'Submitted',
-  Graded = 'Graded',
-}
-
 export interface AssignmentSubmission {
-  id: string; // Composite key: `${userEmail}-${weekIndex}-${moduleIndex}`
+  id: string;
   userEmail: string;
   userName: string;
   weekIndex: number;
@@ -91,10 +90,8 @@ export interface AssignmentSubmission {
   status: SubmissionStatus;
   grade?: string;
   feedback?: string;
-  submittedAt: string; // ISO Date string
+  submittedAt: string;
 }
-
-// --- Live Studio Types ---
 
 export interface LiveStudioChatMessage {
   id: string;
@@ -111,14 +108,26 @@ export interface CodeContribution {
 }
 
 export interface LiveStudioState {
+  sessionId: string | null;
   isLive: boolean;
   presenterEmail: string | null;
   mode: 'camera' | 'screen';
-  allowedCoders: string[]; // list of user emails
-  participants: Record<string, { name: string; avatar?: string }>; // email -> user info
-  contributions: Record<string, CodeContribution>; // email -> contribution
+  allowedCoders: string[];
+  participants: Record<string, { name: string; avatar?: string }>;
+  contributions: Record<string, CodeContribution>;
   isRecording: boolean;
   sessionStartTime: number | null;
   raisedHands: string[];
-  cursors: Record<string, { position: number, name: string }>;
+  cursors: Record<string, { position: number; name: string }>;
+}
+
+export interface LiveSessionDBState {
+  id: string;
+  presenter_id: string;
+  presenter_name: string;
+  is_active: boolean;
+  session_participants?: Array<{
+    user_id: string;
+    user_name: string;
+  }>;
 }
