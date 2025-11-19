@@ -103,14 +103,14 @@ const App: React.FC = () => {
     }
   }, []);
 
-   const handleAdminLogin = useCallback(async (email: string, pass: string) => {
-    const adminUser = await loginAsAdmin(email, pass);
+    const handleAdminLogin = useCallback(async (email: string, pass: string) => {
+    const adminUser = await loginAsAdmin(email, pass);  // ← This now comes from src/auth.ts (PHP API)
     if (adminUser) {
       setCurrentUser(adminUser);
-      localStorage.setItem('currentUser', JSON.stringify(adminUser));  // ← persist
+      localStorage.setItem('currentUser', JSON.stringify(adminUser));
       setAdminView(AdminView.Dashboard);
     } else {
-      alert('Invalid admin credentials');
+      alert('Invalid admin credentials or server error');
     }
   }, []);
 
