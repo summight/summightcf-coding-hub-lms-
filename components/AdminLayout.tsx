@@ -9,8 +9,8 @@ import Notification from './Notification';
 import useNotificationSound from '../hooks/useNotificationSound';
 import { AdminView } from '../App';
 import { AdminCredentials, User, AdminChatMessage } from '../types';
-import { AppUser } from '../src/auth';
-import { ensureAdminExists } from '../src/auth';  // For real queries
+import { AppUser } from '../src/api/live';
+import { ensureAdminExists } from '../src/api/live';  // For real queries
 import { UserGroupIcon, BookOpenIcon, DocumentTextIcon, Cog6ToothIcon, ChatBubbleLeftRightIcon, CameraIcon } from './icons';
 
 interface AdminChatSummary {

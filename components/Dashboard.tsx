@@ -1,7 +1,7 @@
 import React, { useState, useRef, ChangeEvent } from 'react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
-import { ensureAdminExists } from '../src/auth'; // Import for Storage
+import { ensureAdminExists } from '../src/api/live'; // Import for Storage
 import { useCourse } from '../context/CourseContext';
 import { useCourseData } from '../context/CourseDataContext';
 import { ModuleStatus } from '../types';

@@ -1,4 +1,4 @@
-// components/Header.tsx
+// components/Header.tsx - FINAL CLEAN VERSION
 import React from 'react';
 
 interface HeaderProps {
@@ -16,47 +16,48 @@ const Header: React.FC<HeaderProps> = ({
   userAvatar,
   onNavigateToLiveStudio,
 }) => {
-  // Temporarily hardcode isLive = false until we build the API
+  // Live indicator will be added later when PHP API is ready
   const isLive = false;
 
   return (
-    <header className="bg-white dark:bg-slate-800 shadow-sm">
+    <header className="bg-white dark:bg-slate-800 shadow-md border-b border-slate-200 dark:border-slate-700">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          <div className="flex items-center">
-            <h1 className="text-xl font-semibold text-slate-900 dark:text-white">
+          <div className="flex items-center space-x-4">
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
               {isAdmin ? 'Admin Portal' : 'Student Dashboard'}
             </h1>
             {isLive && (
-              <span className="ml-3 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 animate-pulse">
-                ● Live
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-red-600 text-white animate-pulse">
+                ● LIVE NOW
               </span>
             )}
           </div>
-          <div className="flex items-center space-x-4">
+
+          <div className="flex items-center space-x-6">
             {isLive && (
               <button
                 onClick={onNavigateToLiveStudio}
-                className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-red-600 hover:bg-red-700 transition"
+                className="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition shadow-lg"
               >
-                Join Live Session
+                Join Live Studio
               </button>
             )}
+
             <div className="flex items-center space-x-3">
               {userAvatar ? (
-                <img className="h-10 w-10 rounded-full object-cover border-2 border-slate-300" src={userAvatar} alt={userName} />
+                <img className="h-10 w-10 rounded-full ring-2 ring-blue-500" src={userAvatar} alt={userName} />
               ) : (
-                <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold">
-                  {userName.charAt(0).toUpperCase()}
+                <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg">
+                  {userName[0].toUpperCase()}
                 </div>
               )}
-              <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                {userName}
-              </span>
+              <span className="font-medium text-slate-700 dark:text-slate-300">{userName}</span>
             </div>
+
             <button
               onClick={onLogout}
-              className="text-sm font-medium text-red-600 hover:text-red-800 dark:text-red-400 transition"
+              className="text-red-600 hover:text-red-800 font-medium transition"
             >
               Logout
             </button>

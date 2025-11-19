@@ -8,15 +8,15 @@ import { CameraIcon, StopIcon, PlayCircleIcon, MicrophoneIcon, DownloadIcon } fr
 import { useScreenShare } from '../services/geminiService';
 import {
   startLiveSessionDB,
-  endLiveSessionDB,
+  // endLiveSessionDB,
   joinSessionDB,
   leaveSessionDB,
-  fetchLiveState,
+  // fetchLiveState,
   saveRecordingDB,
   fetchChatMessagesDB,
   sendChatMessageDB,
   clearChatMessagesDB,
-} from '../src/auth';
+} from '../src/api/live';
 import { User, LiveStudioState, LiveSessionDBState, LiveStudioChatMessage } from '../types';
 
 interface LiveStudioProps {

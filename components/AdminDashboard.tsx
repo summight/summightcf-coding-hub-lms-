@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, ArcElement, Title, Tooltip, Legend } from 'chart.js';
 import { Bar, Pie } from 'react-chartjs-2';
-import { AppUser } from '../src/auth';
+import { AppUser } from '../src/api/live';
 import { useCourseData } from '../context/CourseDataContext';
 import Card from './Card';
 import ProgressBar from './ProgressBar';
